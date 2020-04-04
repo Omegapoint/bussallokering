@@ -1,0 +1,92 @@
+extends layout
+
+block content
+  h1 #{title} turn #{game.data.turn}
+  h2 Viewing Your Team: #{team.data.name}
+
+  p correct guesses on other teams :) #{team.data.guessPoints}
+  p failpoints :( #{team.data.failPoints}
+  p other teams guessed correctly :( #{team.data.otherGuessesPoints}
+ 
+  h2 Other teams
+  each otherTeam in otherTeams
+    a(href="/play/" + player._id + "/" + game._id + "/" + otherTeam._id) View #{otherTeam.data.name}
+ 
+  h2 WORDS
+  div.words
+    each word, index in team.data.words
+      div.word #{index + 1}. #{word}
+
+  h2 HINTS
+  if team.data.hints
+    ol
+      each hint in team.data.hints
+        li: p #{hint}
+
+
+  if player._id == team.data.cryptographer
+    p You're the cryptographer. The code is:
+    h2 #{team.data.code.split("").join(".")}
+    if team.data.hints.length != 3
+      h2 Submit your hints below:
+      form(method='POST' action='/hint/' + game._id + '/team/' + team._id)
+        div.form-group
+          label(for='hint1') Hint 1:
+            input#name.form-control(type='text', placeholder='hint' name='hint1' maxlength=25)
+        div.form-group
+          label(for='hint2') Hint 2:
+            input#name.form-control(type='text', placeholder='hint' name='hint2' maxlength=25)
+        div.form-group
+          label(for='hint3') Hint 3:
+            input#name.form-control(type='text', placeholder='hint' name='hint3' maxlength=25)
+        button(type='submit') SUBMIT HINTS
+    else
+
+  else
+    p You're a regular player
+    if team.data.hints.length != 3
+      div.warning Waiting for hints
+    else
+      if !team.data.guesses[team._id.toString()] || team.data.guesses[team._id.toString()].length == 0
+        p Submit your guess below (Format: XXX, for example 321)
+          form(method='POST' action='/guess/' + game._id + '/guessingTeam/' + team._id + '/otherTeam/' + team._id)
+            div.form-group
+              label(for='guess') GUESS:
+                input#name.form-control(type="text" pattern="[1-#{game.data.numWords}]*" placeholder='000' name='guess' maxlength=3)
+            button(type='submit') SUBMIT GUESS
+      else
+        p Submitted guess: #{team.data.guesses[team._id.toString()].split("").join(".")}
+
+  if thingsLeftToDo
+    h2 THINGS LEFT BEFORE TURN END
+    div.warnings
+      each thingLeftToDo in thingsLeftToDo
+        div.warning= thingLeftToDo
+
+  h2 Previous Word hints
+  div.wordhints
+    each wordHint, wordHintIndex in wordHints
+      div.wordhint-column
+        h2 #{wordHintIndex + 1}.
+        each hint in wordHint
+          p= hint
+
+  if teamTurnsLog.length > 0
+    h2 LOG (? = guess, ?! = their guess, ! = correct)
+    each turnLog, turnIndex in teamTurnsLog
+      h3 turn #{turnIndex + 1}
+      div.log
+        div.log-hints
+          div.log-hint hints:
+          each hint, hintIndex in turnLog.hints
+            div.log-hint #{hintIndex + 1}. #{hint}
+        div.log-guesses
+          div(class=turnLog.guess == turnLog.correct ? "log-guess-correct" : "log-guess-wrong")
+            div.log-guess-number ?
+            each guessNumber, index in turnLog.guess
+              div(class=guessNumber == turnLog.correct[index] ? "log-guess-number-correct" : "log-guess-number-wrong")= guessNumber
+          div(class="log-guess")
+            div.log-guess-number !
+            each correctNumber in turnLog.correct
+              div.log-guess-number= correctNumber
+  

@@ -1,0 +1,66 @@
+extends layout_otherteam
+
+block content
+  h1 #{title} turn #{game.data.turn}
+  h2 Viewing #{otherteam.data.name}
+
+  p correct guesses on other teams :) #{otherteam.data.guessPoints}
+  p failpoints :( #{otherteam.data.failPoints}
+  p other teams guessed correctly :( #{otherteam.data.otherGuessesPoints}
+
+  a(href="/play/" + player._id + "/" + game._id) Go back to your team
+
+  h2 WORDS
+  div.words
+    each word, index in otherteam.data.words
+      div.word #{index + 1}. ? 
+
+  h2 HINTS
+
+  if otherteam.data.hints.length != 3
+    div.warning Waiting for hints
+  else
+    ol
+      each hint in otherteam.data.hints
+        li: p #{hint}
+    if !team.data.guesses[otherteam._id.toString()] || team.data.guesses[otherteam._id.toString()].length == 0
+      p Submit your guess below (Format: XXX, for example 321)
+        form(method='POST' action='/guess/' + game._id + '/guessingTeam/' + team._id + '/otherTeam/' + otherteam._id)
+          div.form-group
+            label(for='guess') GUESS:
+              input#name.form-control(type='text', placeholder='000' name='guess' maxlength=3)
+          button(type='submit') SUBMIT GUESS
+    else
+      p Submitted guess: #{team.data.guesses[otherteam._id.toString()]}
+  
+  h2 Previous Word hints
+  div.wordhints
+    each wordHint, wordHintIndex in wordHints
+      div.wordhint-column
+        h2 #{wordHintIndex + 1}.
+        each hint in wordHint
+          p= hint
+
+  if teamTurnsLog.length > 0
+    h2 LOG (? = guess, ?! = their guess, ! = correct)
+    each turnLog, turnIndex in teamTurnsLog
+      h3 turn #{turnIndex + 1}
+      div.log
+        div.log-hints
+          div.log-hint hints:
+          each hint, hintIndex in turnLog.hints
+            div.log-hint #{hintIndex + 1}. #{hint}
+        div.log-guesses
+          div(class=turnLog.guess == turnLog.correct ? "log-guess-correct" : "log-guess-wrong")
+            div.log-guess-number ?
+            each guessNumber, index in turnLog.guess
+              div(class=guessNumber == turnLog.correct[index] ? "log-guess-number-correct" : "log-guess-number-wrong")= guessNumber
+          div(class=turnLog.theirGuess == turnLog.correct ? "log-guess-correct" : "log-guess-wrong")
+            div.log-guess-number ?!
+            each theirGuessNumber, index in turnLog.theirGuess
+              div(class=theirGuessNumber == turnLog.correct[index] ? "log-guess-number-correct" : "log-guess-number-wrong")= theirGuessNumber
+          div.log-guess
+            div.log-guess-number !
+            each correctNumber in turnLog.correct
+              div.log-guess-number= correctNumber
+  
